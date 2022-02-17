@@ -1,4 +1,6 @@
-FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
+#FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
+#FROM mcr.microsoft.com/azureml/pytorch-1.6-ubuntu18.04-py37-cpu-inference:latest
+FROM wav2letter/wav2letter:cpu-latest
 
 WORKDIR /app
 
@@ -27,11 +29,20 @@ RUN apt-get update && \
     libgl1-mesa-glx \
     libomp-dev
 
+# Install miniconda
+ENV CONDA_DIR /opt/conda
+
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py37_4.11.0-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda
+ENV PATH=$CONDA_DIR/bin:$PATH
+
 # 1. upgrade pip
 RUN pip install --upgrade pip
 
 # 2. install python-mecab-ko
 RUN pip install python-mecab-ko==1.0.9
+
+RUN conda install pytorch==1.6.0 torchvision torchaudio cpuonly -c pytorch
 
 # 3. install pororo
 RUN pip install pororo
@@ -64,8 +75,8 @@ RUN pip install librosa \
     scikit-learn \
     scipy \
     SoundFile==0.10.2 \
-    numba==0.48 \
     ko_pron
+RUN conda install -y numba
 
 WORKDIR /app/external_lib
 
@@ -78,6 +89,11 @@ ENV KENLM_ROOT_DIR="/app/external_lib/kenlm/"
 WORKDIR /app/external_lib
 RUN git clone -b v0.2 https://github.com/facebookresearch/wav2letter.git
 WORKDIR /app/external_lib/wav2letter/bindings/python
+ENV USE_CUDA=0
 RUN pip install -e .
 
-WORKDIR /app
+# install for voila
+RUN pip install voila ipywidgets==7.5.1 ipywebrtc
+RUN conda install -y -c conda-forge xeus-python==0.13.3
+
+WORKDIR /app/scripts

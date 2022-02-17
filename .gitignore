@@ -1,3 +1,5 @@
 *.wav
 *.webm
 scripts/.ipynb_checkpoints
+wav2vec.*
+*.tmp
